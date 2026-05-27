@@ -22,7 +22,7 @@ function Navbar() {
           <a href="#security" className="hover:text-primary transition-colors">SECURITY</a>
         </div>
         <Button variant="default" className="font-mono font-bold tracking-tight bg-primary text-primary-foreground hover:bg-primary/90 glow-box-primary rounded-none" asChild>
-          <a href="#" data-testid="link-add-discord-nav">INITIATE CONNECTION</a>
+          <a href="https://discord.com/oauth2/authorize?client_id=1499011937256734771&permissions=268561488&scope=bot%20applications.commands" target="_blank" rel="noreferrer" data-testid="link-add-discord-nav">INITIATE CONNECTION</a>
         </Button>
       </div>
     </nav>
@@ -51,7 +51,7 @@ function Hero() {
           
           <div className="flex flex-col sm:flex-row gap-4 mt-4">
             <Button size="lg" className="h-14 px-8 font-mono text-base font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-none glow-box-primary" asChild>
-              <a href="#" data-testid="link-add-discord-hero">
+              <a href="https://discord.com/oauth2/authorize?client_id=1499011937256734771&permissions=268561488&scope=bot%20applications.commands" target="_blank" rel="noreferrer" data-testid="link-add-discord-hero">
                 ADD TO DISCORD <ChevronRight className="w-5 h-5 ml-2" />
               </a>
             </Button>
@@ -306,7 +306,7 @@ function CTA() {
         </p>
         
         <Button size="lg" className="h-16 px-12 font-mono text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 rounded-none glow-box-primary w-full sm:w-auto" asChild>
-          <a href="#" data-testid="link-add-discord-footer">
+          <a href="https://discord.com/oauth2/authorize?client_id=1499011937256734771&permissions=268561488&scope=bot%20applications.commands" target="_blank" rel="noreferrer" data-testid="link-add-discord-footer">
             ADD TO DISCORD <Zap className="w-6 h-6 ml-2" />
           </a>
         </Button>
