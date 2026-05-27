@@ -945,11 +945,11 @@ export async function startBot(): Promise<void> {
   isStarting = true;
 
   try {
-    const token = process.env["DISCORD_TOKEN"];
-    const clientId = process.env["DISCORD_CLIENT_ID"];
+    const token = process.env["Bot_token"];
+    const clientId = process.env["Client_id"];
 
     if (!token || !clientId) {
-      logger.warn("DISCORD_TOKEN or DISCORD_CLIENT_ID not set — bot will not start");
+      logger.warn("Bot_token or Client_id not set — bot will not start");
       return;
     }
 
