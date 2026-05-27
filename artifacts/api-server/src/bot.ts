@@ -730,7 +730,17 @@ async function handleOpenTicket(interaction: ButtonInteraction): Promise<void> {
   }
 
   if (creatingTickets.has(interaction.user.id)) {
-    await interaction.reply({ content: "You are already creating a ticket.", flags: MessageFlags.Ephemeral });
+    const cancelRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder()
+        .setCustomId("cancel_ticket_creation")
+        .setLabel("Cancel & Start Over")
+        .setStyle(ButtonStyle.Danger),
+    );
+    await interaction.reply({
+      content: "You are already creating a ticket. Click below to cancel and start fresh.",
+      flags: MessageFlags.Ephemeral,
+      components: [cancelRow],
+    });
     return;
   }
 
@@ -1060,7 +1070,10 @@ export async function startBot(): Promise<void> {
           else if (interaction.commandName === "remove") await handleRemove(interaction);
         } else if (interaction.isButton()) {
           const id = interaction.customId;
-          if (id === "open_ticket") await handleOpenTicket(interaction);
+          if (id === "cancel_ticket_creation") {
+            creatingTickets.delete(interaction.user.id);
+            await interaction.update({ content: "Cancelled. Click **Open Ticket** again to start fresh.", components: [] });
+          } else if (id === "open_ticket") await handleOpenTicket(interaction);
           else if (id === "cf_heads") await handleSideSelection(interaction, "heads");
           else if (id === "cf_tails") await handleSideSelection(interaction, "tails");
           else if (id.startsWith("cf_ft:")) {
