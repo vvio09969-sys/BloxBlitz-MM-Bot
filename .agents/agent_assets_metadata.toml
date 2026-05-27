@@ -23,3 +23,9 @@ id = "x5sAv7O6RCGNJVi0xILzf"
 uri = "file://bot-code.tar.gz"
 type = "unspecified"
 title = "bot.ts — BloxBlitz MM Bot source code"
+
+[[outputs]]
+id = "CQjCNE-0PfcBA49z-jWSj"
+uri = "file://bot.txt"
+type = "text"
+title = "bot.ts — rename to bot.ts after downloading"
