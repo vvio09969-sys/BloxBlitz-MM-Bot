@@ -1,5 +1,16 @@
 uploads = []
-generated = []
+
+[[generated]]
+id = "kk6bVCVtv9q2t-Y9BYZo9"
+uri = "file://artifacts/bloxblitz-bot/public/hero-network.png"
+type = "image"
+title = "Abstract glowing network nodes"
+
+[[generated]]
+id = "R1DXRPjPi1GpJVQfGTHE7"
+uri = "file://artifacts/bloxblitz-bot/public/security-lock.png"
+type = "image"
+title = "Glowing neon lock"
 
 [[outputs]]
 id = "XxxnwIOzAAhTJpnfMMDdO"
