@@ -600,6 +600,15 @@ async function handleTc(message: Message): Promise<void> {
 
 // ─── /panel ───────────────────────────────────────────────────────────────────
 async function handlePanel(interaction: ChatInputCommandInteraction): Promise<void> {
+  const channel = interaction.channel as TextChannel;
+  if (channel?.name?.startsWith("ticket-")) {
+    await interaction.reply({
+      content: "⚠️ The panel cannot be posted inside a ticket channel. Use it in a public channel instead.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
   const embed = new EmbedBuilder()
     .setTitle("MM TICKETS")
     .setDescription(
@@ -722,6 +731,8 @@ async function handleOpenTicket(interaction: ButtonInteraction): Promise<void> {
   }
 
   creatingTickets.add(interaction.user.id);
+  // Auto-release after 10 min in case user dismisses the modal without submitting
+  setTimeout(() => creatingTickets.delete(interaction.user.id), 10 * 60 * 1000);
 
   const guild = interaction.guild;
 
