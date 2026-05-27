@@ -254,27 +254,29 @@ async function handleSideSelection(
   interaction: ButtonInteraction,
   side: "heads" | "tails",
 ): Promise<void> {
+  try { await interaction.deferUpdate(); } catch { return; }
+
   const channelId = interaction.channelId;
   const session = coinflipSessions.get(channelId);
 
   if (!session || session.state !== "picking_sides") {
-    await interaction.reply({ content: "No active coinflip awaiting side selection.", flags: MessageFlags.Ephemeral });
+    await interaction.followUp({ content: "No active coinflip awaiting side selection.", flags: MessageFlags.Ephemeral });
     return;
   }
 
   if (session.players.find((p) => p.userId === interaction.user.id)) {
-    await interaction.reply({ content: "You have already chosen your side!", flags: MessageFlags.Ephemeral });
+    await interaction.followUp({ content: "You have already chosen your side!", flags: MessageFlags.Ephemeral });
     return;
   }
 
   if (session.players.length >= 2) {
-    await interaction.reply({ content: "Both players have already chosen their sides.", flags: MessageFlags.Ephemeral });
+    await interaction.followUp({ content: "Both players have already chosen their sides.", flags: MessageFlags.Ephemeral });
     return;
   }
 
   const alreadyTaken = session.players.some((p) => p.side === side);
   if (alreadyTaken) {
-    await interaction.reply({ content: "That side has already been chosen.", flags: MessageFlags.Ephemeral });
+    await interaction.followUp({ content: "That side has already been chosen.", flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -287,7 +289,7 @@ async function handleSideSelection(
   });
   session.scores[interaction.user.id] = 0;
 
-  await interaction.reply({
+  await interaction.followUp({
     content: `<@${interaction.user.id}> chose **${side === "heads" ? "🪙 Heads" : "🎭 Tails"}**!`,
   });
 
@@ -312,7 +314,7 @@ async function handleSideSelection(
       .setColor(GREEN)
       .setTimestamp();
 
-    await interaction.message.edit({ embeds: [sidesEmbed], components: [] });
+    await interaction.message.edit({ embeds: [sidesEmbed], components: [] }).catch(() => {});
 
     const ticketChannelId = interaction.channelId;
     const ftEmbed = new EmbedBuilder()
@@ -344,14 +346,16 @@ async function handleFtSelection(
   ft: number,
   ticketChannelId: string,
 ): Promise<void> {
+  try { await interaction.deferUpdate(); } catch { return; }
+
   const session = coinflipSessions.get(ticketChannelId);
   if (!session || session.state !== "mm_picking_ft") {
-    await interaction.reply({ content: "No coinflip waiting for format selection.", flags: MessageFlags.Ephemeral });
+    await interaction.followUp({ content: "No coinflip waiting for format selection.", flags: MessageFlags.Ephemeral });
     return;
   }
 
   if (interaction.user.id !== session.mmId) {
-    await interaction.reply({ content: "Only the MM can select the match format.", flags: MessageFlags.Ephemeral });
+    await interaction.followUp({ content: "Only the MM can select the match format.", flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -359,11 +363,7 @@ async function handleFtSelection(
   session.state = "ready_check";
   session.readyPlayers.clear();
 
-  try {
-    await interaction.update({ components: [] });
-  } catch (err) {
-    logger.error({ err }, "Failed to update FT interaction");
-  }
+  await interaction.message.edit({ components: [] }).catch(() => {});
 
   const ticketChannel = interaction.client.channels.cache.get(ticketChannelId) as
     | TextChannel
@@ -402,20 +402,22 @@ async function handleFtSelection(
 
 // ─── Coinflip: ready check ────────────────────────────────────────────────────
 async function handleReadyButton(interaction: ButtonInteraction): Promise<void> {
+  try { await interaction.deferUpdate(); } catch { return; }
+
   const session = coinflipSessions.get(interaction.channelId);
   if (!session || session.state !== "ready_check") {
-    await interaction.reply({ content: "No coinflip waiting for ready confirmation.", flags: MessageFlags.Ephemeral });
+    await interaction.followUp({ content: "No coinflip waiting for ready confirmation.", flags: MessageFlags.Ephemeral });
     return;
   }
 
   const isPlayer = session.players.find((p) => p.userId === interaction.user.id);
   if (!isPlayer) {
-    await interaction.reply({ content: "Only the players in this coinflip can click Ready.", flags: MessageFlags.Ephemeral });
+    await interaction.followUp({ content: "Only the players in this coinflip can click Ready.", flags: MessageFlags.Ephemeral });
     return;
   }
 
   if (session.readyPlayers.has(interaction.user.id)) {
-    await interaction.reply({ content: "You are already marked as ready!", flags: MessageFlags.Ephemeral });
+    await interaction.followUp({ content: "You are already marked as ready!", flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -425,19 +427,17 @@ async function handleReadyButton(interaction: ButtonInteraction): Promise<void> 
   const bothReady = session.readyPlayers.has(other.userId);
 
   if (!bothReady) {
-    await interaction.reply({
+    await interaction.followUp({
       content: `<@${interaction.user.id}> is ready to flip! ✅ Waiting for <@${other.userId}>...`,
     });
     return;
   }
 
-  await interaction.reply({
+  await interaction.followUp({
     content: `<@${interaction.user.id}> is ready to flip! ✅ **Both players are ready — let's go!** 🪙`,
   });
 
-  try {
-    await interaction.message.edit({ components: [buildReadyRow(true)] });
-  } catch {}
+  await interaction.message.edit({ components: [buildReadyRow(true)] }).catch(() => {});
 
   if (session.timeout) clearTimeout(session.timeout);
   session.timeout = undefined;
