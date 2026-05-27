@@ -547,10 +547,14 @@ async function fetchAllMessages(channel: TextChannel): Promise<Message[]> {
 
 // ─── !tc ──────────────────────────────────────────────────────────────────────
 async function handleTc(message: Message): Promise<void> {
-  if (!isStaff(message.member)) return;
-
   const channel = message.channel as TextChannel;
   if (!channel.name.startsWith("ticket-")) return;
+
+  const isOwner = channel.topic?.startsWith(`owner:${message.author.id}`);
+  if (!isStaff(message.member) && !isOwner) {
+    await message.reply({ content: "Only the ticket owner or staff can close this ticket." });
+    return;
+  }
 
   const sorted = await fetchAllMessages(channel);
 
