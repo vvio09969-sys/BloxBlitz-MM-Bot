@@ -141,6 +141,21 @@ function buildSidesRow(disabled = false): ActionRowBuilder<ButtonBuilder> {
   );
 }
 
+function buildSidesRowLocked(takenSide: "heads" | "tails"): ActionRowBuilder<ButtonBuilder> {
+  return new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+      .setCustomId("cf_heads")
+      .setLabel("🪙 Heads")
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(takenSide === "heads"),
+    new ButtonBuilder()
+      .setCustomId("cf_tails")
+      .setLabel("🎭 Tails")
+      .setStyle(ButtonStyle.Secondary)
+      .setDisabled(takenSide === "tails"),
+  );
+}
+
 function buildFtRow(channelId: string): ActionRowBuilder<ButtonBuilder> {
   return new ActionRowBuilder<ButtonBuilder>().addComponents(
     new ButtonBuilder()
@@ -275,6 +290,11 @@ async function handleSideSelection(
   await interaction.reply({
     content: `<@${interaction.user.id}> chose **${side === "heads" ? "🪙 Heads" : "🎭 Tails"}**!`,
   });
+
+  // After first pick — lock that button so only the remaining side is clickable
+  if (session.players.length === 1) {
+    await interaction.message.edit({ components: [buildSidesRowLocked(side)] }).catch(() => {});
+  }
 
   if (session.players.length === 2) {
     session.state = "mm_picking_ft";
