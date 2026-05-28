@@ -24,7 +24,15 @@ const server = app.listen(port, (err) => {
 
   logger.info({ port }, "Server listening");
 
-  startBot().catch((e) => logger.error({ e }, "Failed to start Discord bot"));
+  // Only connect to Discord in production — the deployed app is the single
+  // authoritative bot instance. Running the bot in dev at the same time as
+  // the deployed version causes two clients with the same token to both
+  // respond to every message (double embeds).
+  if (process.env["NODE_ENV"] !== "development") {
+    startBot().catch((e) => logger.error({ e }, "Failed to start Discord bot"));
+  } else {
+    logger.info("Development mode — Discord bot disabled to prevent double responses with the deployed instance");
+  }
 });
 
 const shutdown = (signal: string) => {
@@ -33,7 +41,6 @@ const shutdown = (signal: string) => {
     logger.info("HTTP server closed — exiting");
     process.exit(0);
   });
-  // Force-exit after 5 s if connections won't drain
   setTimeout(() => {
     logger.info("Forced exit after timeout");
     process.exit(0);
