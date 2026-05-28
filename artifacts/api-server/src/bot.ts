@@ -83,6 +83,39 @@ function useAndIncrementCounter(): number {
   return n;
 }
 
+// ─── Coinflip stats (persistent) ─────────────────────────────────────────────
+interface PlayerStats {
+  wins: number;
+  losses: number;
+}
+
+type StatsStore = Record<string, PlayerStats>;
+
+function statsPath(): string {
+  return join(process.cwd(), "data", "coinflip-stats.json");
+}
+
+function readStats(): StatsStore {
+  const f = statsPath();
+  if (!existsSync(f)) return {};
+  try {
+    return JSON.parse(readFileSync(f, "utf8")) as StatsStore;
+  } catch {
+    return {};
+  }
+}
+
+function recordMatchResult(winnerId: string, loserId: string): void {
+  const dir = join(process.cwd(), "data");
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  const store = readStats();
+  if (!store[winnerId]) store[winnerId] = { wins: 0, losses: 0 };
+  if (!store[loserId]) store[loserId] = { wins: 0, losses: 0 };
+  store[winnerId]!.wins += 1;
+  store[loserId]!.losses += 1;
+  writeFileSync(statsPath(), JSON.stringify(store, null, 2));
+}
+
 // ─── Coinflip state ───────────────────────────────────────────────────────────
 interface PlayerChoice {
   userId: string;
@@ -508,10 +541,57 @@ async function runFlipLoop(channel: TextChannel, session: CoinflipSession): Prom
       .setTimestamp();
 
     await channel.send({ embeds: [winnerEmbed] });
+
+    // Persist match result so !stats survives bot restarts
+    const gameLoser = session.players.find((p) => p.userId !== gameWinner.userId);
+    if (gameLoser) {
+      try {
+        recordMatchResult(gameWinner.userId, gameLoser.userId);
+      } catch (e) {
+        logger.error({ e }, "Failed to record match result");
+      }
+    }
     return;
   }
 
   session.timeout = setTimeout(() => runFlipLoop(channel, session), FLIP_DELAY_MS);
+}
+
+// ─── !stats ───────────────────────────────────────────────────────────────────
+async function handleStats(message: Message): Promise<void> {
+  const target = message.mentions.users.first() ?? message.author;
+
+  const store = readStats();
+  const stats = store[target.id];
+
+  if (!stats || (stats.wins === 0 && stats.losses === 0)) {
+    await message.reply({
+      embeds: [
+        new EmbedBuilder()
+          .setDescription(`<@${target.id}> has no coinflip history yet.`)
+          .setColor(ORANGE),
+      ],
+    });
+    return;
+  }
+
+  const total = stats.wins + stats.losses;
+  const winRate = ((stats.wins / total) * 100).toFixed(1);
+
+  const embed = new EmbedBuilder()
+    .setTitle(`📊 Coinflip Stats — ${target.username}`)
+    .setThumbnail(target.displayAvatarURL({ size: 256 }))
+    .addFields(
+      { name: "🏆 Matches Won", value: `**${stats.wins}**`, inline: true },
+      { name: "💀 Matches Lost", value: `**${stats.losses}**`, inline: true },
+      { name: "📈 Win Rate", value: `**${winRate}%**`, inline: true },
+      { name: "🎮 Total Matches", value: `**${total}**`, inline: true },
+    )
+    .setColor(GREEN)
+    .setFooter({ text: "Every flip is an independent 50/50 — streaks are just variance." })
+    .setTimestamp();
+
+  await message.reply({ embeds: [embed] });
 }
 
 // ─── !bbv ─────────────────────────────────────────────────────────────────────
@@ -1068,6 +1148,7 @@ export async function startBot(): Promise<void> {
       const cmd = message.content.trim().split(/\s+/)[0]?.toLowerCase();
       if (cmd === "!bbv") await handleBbv(message).catch((e) => logger.error({ e }, "!bbv error"));
       else if (cmd === "!tc") await handleTc(message).catch((e) => logger.error({ e }, "!tc error"));
+      else if (cmd === "!stats") await handleStats(message).catch((e) => logger.error({ e }, "!stats error"));
       else if (cmd === "!coinflip")
         await handleCoinflipCommand(message).catch((e) => logger.error({ e }, "!coinflip error"));
       else if (cmd === "!cancel")
