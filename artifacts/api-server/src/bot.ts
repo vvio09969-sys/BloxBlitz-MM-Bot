@@ -445,11 +445,18 @@ async function handleReadyButton(interaction: ButtonInteraction): Promise<void> 
   setTimeout(() => runFlipLoop(interaction.channel as TextChannel, session), 1500);
 }
 
+// ─── True 50/50 flip ──────────────────────────────────────────────────────────
+// crypto.randomInt(0, 2) is cryptographically secure — returns 0 or 1 each
+// with exactly 50% probability, independently of all previous results.
+function fairFlip(): "heads" | "tails" {
+  return randomInt(0, 2) === 0 ? "heads" : "tails";
+}
+
 // ─── Coinflip: flip loop ──────────────────────────────────────────────────────
 async function runFlipLoop(channel: TextChannel, session: CoinflipSession): Promise<void> {
   if (session.state !== "flipping") return;
 
-  const result = randomInt(0, 2) === 0 ? "heads" : "tails";
+  const result = fairFlip();
   const emoji = result === "heads" ? "🪙" : "🎭";
   const flipWinner = session.players.find((p) => p.side === result);
 
@@ -871,6 +878,16 @@ async function handleTicketFormSubmit(interaction: ModalSubmitInteraction): Prom
               PermissionFlagsBits.ManageMessages,
             ],
           },
+          // Grant every staff role full visibility + messaging in this ticket
+          ...STAFF_ROLE_IDS.map((roleId) => ({
+            id: roleId,
+            allow: [
+              PermissionFlagsBits.ViewChannel,
+              PermissionFlagsBits.SendMessages,
+              PermissionFlagsBits.ReadMessageHistory,
+              PermissionFlagsBits.ManageMessages,
+            ],
+          })),
         ],
       });
     } catch (err) {
